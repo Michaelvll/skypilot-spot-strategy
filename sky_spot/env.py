@@ -1,6 +1,13 @@
 import enum
+import json
+import typing
 
-from trace import Trace
+from sky_spot import trace
+from sky_spot.utils import args_parser
+
+if typing.TYPE_CHECKING:
+    import argparse
+
 
 
 class ClusterType(enum.Enum):
@@ -8,11 +15,18 @@ class ClusterType(enum.Enum):
     SPOT = 'spot'
     NONE = 'none'
 
-class Env:
+class Env(args_parser.ArgsParser):
+    NAME = 'abstract'
+    SUBCLASSES = {}
+
     def __init__(self):
         self.cluster_type = ClusterType.NONE
         self.timestamp = 0
         self.observed_timestamp = -1
+    
+    def __init_subclass__(cls) -> None:
+        assert cls.NAME not in cls.SUBCLASSES and cls.NAME != 'abstract', f'Name {cls.NAME} already exists'
+        cls.SUBCLASSES[cls.NAME] = cls
 
     def observe(self):
         self.observed_timestamp = self.timestamp
@@ -35,9 +49,12 @@ class Env:
 
 
 class TraceEnv(Env):
-    def __init__(self, trace: Trace):
+    NAME = 'trace'
+
+    def __init__(self, trace_file: str):
         super().__init__()
-        self.trace = trace
+        self._trace_file = trace_file
+        self.trace = trace.Trace.from_file(trace_file)
 
     def _observe(self):
         if self.timestamp >= len(self.trace):
@@ -51,3 +68,14 @@ class TraceEnv(Env):
 
     def _step(self, cluster_type: ClusterType):
         return super()._step(cluster_type)
+
+    @property
+    def config_str(self):
+        return json.dumps({'trace_file': self._trace_file})
+
+    @classmethod
+    def _from_args(cls, parser: 'argparse.ArgumentParser') -> 'TraceEnv':
+        group = parser.add_argument_group('TraceEnv')
+        group.add_argument('--trace-file', type=str, help='Folder containing the trace')
+        args, _ = parser.parse_known_args()
+        return cls(args.trace_file)

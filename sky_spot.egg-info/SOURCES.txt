@@ -1,0 +1,13 @@
+README.md
+setup.py
+sky_spot/__init__.py
+sky_spot/env.py
+sky_spot/main.py
+sky_spot/trace.py
+sky_spot.egg-info/PKG-INFO
+sky_spot.egg-info/SOURCES.txt
+sky_spot.egg-info/dependency_links.txt
+sky_spot.egg-info/top_level.txt
+sky_spot/strategies/__init__.py
+sky_spot/strategies/strategy.py
+sky_spot/strategies/strawman.py

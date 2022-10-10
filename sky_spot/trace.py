@@ -12,7 +12,7 @@ class Trace:
     def from_file(cls, trace_file: str):
         with open(trace_file, 'r') as f:
             trace_data = json.load(f)
-        trace = Trace(trace_data['gap_seconds'], trace_data['data'])
+        trace = Trace(trace_data['metadata']['gap_seconds'], trace_data['data'])
         return trace
     
     def __get_item__(self, index: int):
