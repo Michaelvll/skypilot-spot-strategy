@@ -5,7 +5,6 @@ import random
 
 import numpy as np
 
-random.seed(0)
 
 GENERATORS = {}
 
@@ -41,6 +40,7 @@ class PoissonTraceGenerator(TraceGenerator):
 
     def generate(self, num_traces: int):
         for i in range(num_traces):
+            random.seed(i)
             file_path = self.output_folder / f'{i}.json'
             if file_path.exists():
                 continue
