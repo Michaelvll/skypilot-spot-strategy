@@ -3,10 +3,9 @@ import json
 import typing
 
 from sky_spot import trace
-from sky_spot.utils import args_parser
 
 if typing.TYPE_CHECKING:
-    import argparse
+    import configargparse
 
 
 
@@ -15,7 +14,7 @@ class ClusterType(enum.Enum):
     SPOT = 'spot'
     NONE = 'none'
 
-class Env(args_parser.ArgsParser):
+class Env:
     NAME = 'abstract'
     SUBCLASSES = {}
 
@@ -46,6 +45,25 @@ class Env(args_parser.ArgsParser):
     def _step(self, cluster_type: ClusterType):
         self.cluster_type = cluster_type
         return self.cluster_type
+    
+    def __repr__(self) -> str:
+        return f'{self.NAME}({self.config_str})'
+
+    @property
+    def config_str(self):
+        return ''
+
+    @classmethod
+    def from_args(cls, parser: 'configargparse.ArgumentParser') -> 'Env':
+        parser.add_argument(f'--env-config', type=str, default=None, is_config_file=True, required=False)
+        parser.add_argument(f'--env', type=str, default='trace', choices=cls.SUBCLASSES.keys())
+        args, _ = parser.parse_known_args()
+        cls = cls.SUBCLASSES[args.env]
+        return cls._from_args(parser)
+
+    @classmethod
+    def _from_args(cls, parser: 'configargparse.ArgumentParser') -> 'Env':
+        raise NotImplementedError
 
 
 class TraceEnv(Env):

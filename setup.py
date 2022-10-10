@@ -15,9 +15,7 @@ discussion](https://github.com/skypilot-org/skypilot/discussions/1016)
 
 import io
 import os
-import platform
 import re
-import warnings
 
 import setuptools
 
@@ -43,7 +41,9 @@ def parse_footnote(readme: str) -> str:
     return footnote_re.sub(r'<sup>[\1]</sup>', readme)
 
 
-install_requires = []
+install_requires = [
+    'configargparse',
+]
 
 long_description = ''
 readme_filepath = 'README.md'
