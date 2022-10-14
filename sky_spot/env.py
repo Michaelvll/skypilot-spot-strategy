@@ -1,51 +1,80 @@
-import enum
 import json
 import typing
+from typing import Tuple
 
 from sky_spot import trace
+from sky_spot.utils import ClusterType, COSTS
 
 if typing.TYPE_CHECKING:
     import configargparse
 
 
-
-class ClusterType(enum.Enum):
-    ON_DEMAND = 'on-demand'
-    SPOT = 'spot'
-    NONE = 'none'
-
 class Env:
     NAME = 'abstract'
     SUBCLASSES = {}
 
-    def __init__(self):
+    def __init__(self, gap_seconds: float):
+        # dones not include the cluster_type for the current timestamp - 1 -> timestamp, until observed on timestamp
+        self.cluster_type_histroy = []
         self.cluster_type = ClusterType.NONE
+        self.gap_seconds = gap_seconds
         self.timestamp = 0
         self.observed_timestamp = -1
+        self.total_cost = 0
     
     def __init_subclass__(cls) -> None:
         assert cls.NAME not in cls.SUBCLASSES and cls.NAME != 'abstract', f'Name {cls.NAME} already exists'
         cls.SUBCLASSES[cls.NAME] = cls
 
-    def observe(self):
-        self.observed_timestamp = self.timestamp
-        return self._observe()
+    def spot_available(self) -> bool:
+        """
+        Returns True if spot is available at the current timestamp -> timestamp + 1
+        """
+        raise NotImplementedError
 
-    def step(self, cluster_type: ClusterType):
+    def observe(self) -> Tuple[ClusterType, bool]:
+        """
+        Returns the cluster type (at last time gap) and whether spot is available
+        """
+        assert self.observed_timestamp == self.timestamp - 1, (self.observed_timestamp, self.timestamp)
+        self.observed_timestamp = self.timestamp
+        has_spot = self.spot_available()
+        last_cluster_type = self.cluster_type
+        self.cluster_type_histroy.append(last_cluster_type)
+        self._accumulated_cost()
+        if self.cluster_type == ClusterType.SPOT and not has_spot:
+            self.cluster_type = ClusterType.NONE
+        return last_cluster_type, has_spot
+
+    def step(self, request_type: ClusterType):
         if self.observed_timestamp != self.timestamp:
             self.observe()
-        new_cluster_type = self._step(cluster_type)
+        if request_type == ClusterType.SPOT and not self.spot_available():
+            raise ValueError('Spot not available')
+        new_cluster_type = self._step(request_type)
         self.timestamp += 1
         return new_cluster_type
 
 
-    def _observe(self):
+    def _step(self, request_type: ClusterType):
+        self.cluster_type = request_type
         return self.cluster_type
 
-    def _step(self, cluster_type: ClusterType):
-        self.cluster_type = cluster_type
-        return self.cluster_type
+    @property
+    def accumulated_cost(self) -> float:
+        """Accumulated cost of the environment"""
+        self.total_cost += sum(COSTS[cluster_type] for cluster_type in self.cluster_type_histroy)
     
+    def info(self) -> dict:
+        # Step should have been called
+        assert self.timestamp == self.observed_timestamp + 1
+        return {
+                'Timestamp': self.timestamp - 1,
+                'Elapsed': (self.timestamp - 1) * self.gap_seconds,
+                'Cost': self.accumulated_cost,
+                'ClusterType': self.cluster_type_histroy[-1]
+            }
+
     def __repr__(self) -> str:
         return f'{self.NAME}({self.config_str})'
 
@@ -70,29 +99,23 @@ class TraceEnv(Env):
     NAME = 'trace'
 
     def __init__(self, trace_file: str):
-        super().__init__()
         self._trace_file = trace_file
         self.trace = trace.Trace.from_file(trace_file)
+        
+        super().__init__(self.trace.gap_seconds)
 
-    def _observe(self):
+    def spot_available(self) -> bool:
         if self.timestamp >= len(self.trace):
-            return None
-        if self.cluster_type == ClusterType.SPOT:
-            if self.trace[self.timestamp]:
-                return ClusterType.NONE
-            else:
-                return ClusterType.SPOT
-        return self.cluster_type
-
-    def _step(self, cluster_type: ClusterType):
-        return super()._step(cluster_type)
+            raise ValueError('Timestamp out of range')
+        return not self.trace[self.timestamp]
+        
 
     @property
     def config_str(self):
         return json.dumps({'trace_file': self._trace_file})
 
     @classmethod
-    def _from_args(cls, parser: 'argparse.ArgumentParser') -> 'TraceEnv':
+    def _from_args(cls, parser: 'configargparse.ArgumentParser') -> 'TraceEnv':
         group = parser.add_argument_group('TraceEnv')
         group.add_argument('--trace-file', type=str, help='Folder containing the trace')
         args, _ = parser.parse_known_args()
