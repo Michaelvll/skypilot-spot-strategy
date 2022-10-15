@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import pathlib
 import random
 
@@ -62,13 +63,14 @@ class PoissonTraceGenerator(TraceGenerator):
 
 if __name__ == __name__:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--trace-folder', type=str, default='traces')
+    parser.add_argument('--trace-folder', type=str, default='data/poisson')
     parser.add_argument('--generator', type=str, default='poisson')
     parser.add_argument('--gap-seconds', type=int, default=20*60)
     parser.add_argument('--rate', type=float, default=0.1)
     parser.add_argument('--length', type=int, default=60*24*7)
     parser.add_argument('--num-traces', type=int, default=100)
     args = parser.parse_args()
-
+    
+    args.trace_folder = os.path.join(args.trace_folder, f'gap_{args.gap_seconds}-rate_{args.rate}')
     generator = GENERATORS[args.generator](args.trace_folder, args.gap_seconds, args.rate, args.length)
     generator.generate(args.num_traces)

@@ -1,5 +1,6 @@
 import configargparse
 
+import plotly
 import wandb
 
 from sky_spot import env as env_lib
@@ -7,16 +8,36 @@ from sky_spot.strategies import strategy as strategy_lib
 
 wandb.init(project='sky-spot')
 
+def plot_step(env, history, name='RequestType'):
+    request_types = [h[name] for h in history]
+    plot_trace = {
+        "x": [env.gap_seconds * i / 3600.0 for i in range(len(request_types))],
+        "y": request_types,
+        "line": {"shape": 'hv'},
+        "mode": 'lines',
+        "name": 'value',
+        "type": 'scatter'
+        }
+    div = plotly.offline.plot({'data': [plot_trace]}, output_type='div', auto_open=False)
+    wandb.log({f'Type/{name}': wandb.Html(div)})
+
+
 def simulate(env: env_lib.Env, strategy: strategy_lib.Strategy):
+    history = []
     while not strategy.task_done:
         request_type = strategy.step(env)
         env.step(request_type)
-        wandb.log({
+        info = {
+            'RequestType': request_type.value,
             **env.info(),
             **strategy.info(),
-        })
+        }
+        history.append(info)
+        wandb.log(info)
         if env.timestamp % 100 == 0:
             print(f'==> Timestamp: {env.timestamp}')
+    # plot_step(env, history, name='ClusterType')
+    
 
 def main():
     parser = configargparse.ArgumentParser('Skypilot spot simulator')
@@ -36,7 +57,7 @@ def main():
     print(env)
     print(strategy)
 
-    wandb.run.name = f'{strategy.NAME}-{env.NAME}-{wandb.run.id}'
+    wandb.run.name = f'{strategy.NAME}-{env.NAME}-ddl={args.deadline_hours}-dur={args.task_duration_hours}-over={args.restart_overhead_hours}'
     wandb.run.save()
     wandb.config.update(args)
 

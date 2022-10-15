@@ -40,7 +40,9 @@ class Env:
         has_spot = self.spot_available()
         last_cluster_type = self.cluster_type
         self.cluster_type_histroy.append(last_cluster_type)
+
         if self.cluster_type == ClusterType.SPOT and not has_spot:
+            print('Preempted at', self.timestamp)
             self.cluster_type = ClusterType.NONE
         return last_cluster_type, has_spot
 
@@ -57,6 +59,10 @@ class Env:
     def _step(self, request_type: ClusterType):
         self.cluster_type = request_type
         return self.cluster_type
+
+    @property
+    def elapsed_seconds(self) -> float:
+        return self.timestamp * self.gap_seconds
 
     @property
     def accumulated_cost(self) -> float:
