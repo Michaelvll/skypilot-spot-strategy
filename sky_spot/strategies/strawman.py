@@ -19,9 +19,11 @@ class StrawmanStrategy(strategy.Strategy):
         if last_cluster_type == ClusterType.NONE:
             self.task_done_time.append(0)
         else:
-            if self.remaining_restart_overhead > 0:
-                task_done_time = max(env.gap_seconds - self.remaining_restart_overhead, 0)
-                self.remaining_restart_overhead -= (env.gap_seconds - task_done_time)
+            task_done_time = max(env.gap_seconds - self.remaining_restart_overhead, 0)
+            self.remaining_restart_overhead -= (env.gap_seconds - task_done_time)
+            
+            remaining_task_time = self.task_duration - sum(self.task_done_time)
+            task_done_time = min(task_done_time, remaining_task_time)
             self.task_done_time.append(task_done_time)
 
         remaining_time = self.deadline - env.timestamp
@@ -45,10 +47,10 @@ class StrawmanStrategy(strategy.Strategy):
         return request_type
 
     def info(self):
-        return dict(
-            total_task_seconds=self.task_done_time[-1],
-            remaining_task_seconds=self.task_duration - sum(self.task_done_time),
-        )
+        return {
+            'Task/Done(seconds)': self.task_done_time[-1],
+            'Task/Remaining(seconds)': self.task_duration - sum(self.task_done_time),
+        }
 
     @classmethod
     def _from_args(cls, parser: 'argparse.ArgumentParser') -> 'StrawmanStrategy':

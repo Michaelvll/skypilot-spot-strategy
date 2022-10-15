@@ -1,9 +1,9 @@
 import enum
 
 class ClusterType(enum.Enum):
-    ON_DEMAND = 'on-demand'
-    SPOT = 'spot'
-    NONE = 'none'
+    NONE = enum.auto()
+    SPOT = enum.auto()
+    ON_DEMAND = enum.auto()
 
 
 COSTS = {

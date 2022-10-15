@@ -41,7 +41,6 @@ class Env:
         has_spot = self.spot_available()
         last_cluster_type = self.cluster_type
         self.cluster_type_histroy.append(last_cluster_type)
-        self._accumulated_cost()
         if self.cluster_type == ClusterType.SPOT and not has_spot:
             self.cluster_type = ClusterType.NONE
         return last_cluster_type, has_spot
@@ -72,7 +71,7 @@ class Env:
                 'Timestamp': self.timestamp - 1,
                 'Elapsed': (self.timestamp - 1) * self.gap_seconds,
                 'Cost': self.accumulated_cost,
-                'ClusterType': self.cluster_type_histroy[-1]
+                'ClusterType': self.cluster_type_histroy[-1].value,
             }
 
     def __repr__(self) -> str:

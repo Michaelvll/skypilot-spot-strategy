@@ -15,7 +15,7 @@ class Trace:
         trace = Trace(trace_data['metadata']['gap_seconds'], trace_data['data'])
         return trace
     
-    def __get_item__(self, index: int):
+    def __getitem__(self, index: int):
         return self._data[index]
 
     def __len__(self):
