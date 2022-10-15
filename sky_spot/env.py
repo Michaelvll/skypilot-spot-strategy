@@ -20,7 +20,6 @@ class Env:
         self.gap_seconds = gap_seconds
         self.timestamp = 0
         self.observed_timestamp = -1
-        self.total_cost = 0
     
     def __init_subclass__(cls) -> None:
         assert cls.NAME not in cls.SUBCLASSES and cls.NAME != 'abstract', f'Name {cls.NAME} already exists'
@@ -62,7 +61,7 @@ class Env:
     @property
     def accumulated_cost(self) -> float:
         """Accumulated cost of the environment"""
-        self.total_cost += sum(COSTS[cluster_type] for cluster_type in self.cluster_type_histroy)
+        return sum(COSTS[cluster_type] for cluster_type in self.cluster_type_histroy)
     
     def info(self) -> dict:
         # Step should have been called
@@ -71,7 +70,7 @@ class Env:
                 'Timestamp': self.timestamp - 1,
                 'Elapsed': (self.timestamp - 1) * self.gap_seconds,
                 'Cost': self.accumulated_cost,
-                'ClusterType': self.cluster_type_histroy[-1].value,
+                'ClusterType': self.cluster_type.value,
             }
 
     def __repr__(self) -> str:

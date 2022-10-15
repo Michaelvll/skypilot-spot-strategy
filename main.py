@@ -15,6 +15,8 @@ def simulate(env: env_lib.Env, strategy: strategy_lib.Strategy):
             **env.info(),
             **strategy.info(),
         })
+        if env.timestamp % 100 == 0:
+            print(f'==> Timestamp: {env.timestamp}')
 
 def main():
     parser = configargparse.ArgumentParser('Skypilot spot simulator')
