@@ -34,7 +34,7 @@ class StrawmanStrategy(strategy.Strategy):
             request_type = ClusterType.NONE
 
 
-        if remaining_task_time + self.restart_overhead <= remaining_time:
+        if remaining_task_time + self.restart_overhead >= remaining_time:
             # We need to finish it on time by switch to on-demand
             request_type = ClusterType.ON_DEMAND
         
