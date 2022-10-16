@@ -6,8 +6,9 @@ class ClusterType(enum.Enum):
     ON_DEMAND = enum.auto()
 
 
+# Price for p3.2xlarge (single V100) on us-west-2
 COSTS = {
-    ClusterType.ON_DEMAND: 3,
-    ClusterType.SPOT: 1,
+    ClusterType.ON_DEMAND: 3.06,
+    ClusterType.SPOT: 0.9731,
     ClusterType.NONE: 0,
 }
