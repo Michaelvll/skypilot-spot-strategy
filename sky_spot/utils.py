@@ -7,6 +7,7 @@ class ClusterType(enum.Enum):
 
 
 # Price for p3.2xlarge (single V100) on us-west-2
+# https://aws.amazon.com/ec2/instance-types/p3/
 COSTS = {
     ClusterType.ON_DEMAND: 3.06,
     ClusterType.SPOT: 0.9731,
