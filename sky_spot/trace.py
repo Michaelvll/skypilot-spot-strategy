@@ -1,18 +1,17 @@
-import copy
 import json
 import os
-from typing import List
 
 class Trace:
-    def __init__(self, gap_seconds: int, data: List[int]):
-        self.gap_seconds = gap_seconds
-        self._data = copy.copy(data)
+    def __init__(self, trace_data: dict):
+        self.gap_seconds = trace_data['metadata']['gap_seconds']
+        self.metadata = trace_data['metadata']
+        self._data = trace_data['data']
 
     @classmethod
     def from_file(cls, trace_file: str):
         with open(trace_file, 'r') as f:
             trace_data = json.load(f)
-        trace = Trace(trace_data['metadata']['gap_seconds'], trace_data['data'])
+        trace = Trace(trace_data)
         return trace
     
     def __getitem__(self, index: int):
@@ -25,6 +24,8 @@ class Trace:
         for item in self._data:
             yield item
     
+    def toJSON(self):
+        return json.dumps(self._trace_data)
 
 
 class TraceDataset:

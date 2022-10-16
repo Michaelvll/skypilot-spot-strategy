@@ -57,9 +57,12 @@ def main():
     print(env)
     print(strategy)
 
-    wandb.run.name = f'{strategy.NAME}-{env.NAME}-ddl={args.deadline_hours}-dur={args.task_duration_hours}-over={args.restart_overhead_hours}'
+    trace_file = args.trace_file.split('/')[-1].split('.')[0]
+    wandb.run.name = f'{strategy.NAME}-{env.NAME}-{trace_file}-ddl={args.deadline_hours}-dur={args.task_duration_hours}-over={args.restart_overhead_hours}'
     wandb.run.save()
     wandb.config.update(args)
+    wandb.config.update({'env_metadata': env.config})
+    wandb.config.update({'strategy_metadata': strategy.config})
 
     simulate(env, strategy)
 

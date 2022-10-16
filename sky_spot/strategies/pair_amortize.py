@@ -8,8 +8,8 @@ from sky_spot.utils import ClusterType
 if typing.TYPE_CHECKING:
     from sky_spot import env
 
-class StrawmanStrategy(strategy.Strategy):
-    NAME = 'strawman'
+class PairAmortizeStrategy(strategy.Strategy):
+    NAME = 'pair_amortize'
 
     def __init__(self, args):
         super().__init__(args.deadline_hours, args.task_duration_hours, args.restart_overhead_hours)
@@ -59,4 +59,9 @@ class StrawmanStrategy(strategy.Strategy):
         args, _ = parser.parse_known_args()
         return cls(args)
     
+
+    @property
+    def config_str(self):
+        return json.dumps({'deadline': self.deadline, 'task_duration': self.task_duration})
+
 

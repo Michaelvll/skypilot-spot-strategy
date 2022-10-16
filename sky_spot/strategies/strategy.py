@@ -1,3 +1,4 @@
+import json
 import typing
 
 from sky_spot.utils import ClusterType
@@ -27,7 +28,7 @@ class Strategy:
         cls.SUBCLASSES[cls.NAME] = cls
 
     def __repr__(self) -> str:
-        return f'{self.NAME}({self.config_str})'
+        return f'{self.NAME}({json.dumps(self.config)})'
 
     def step(self, env: 'env.Env') -> ClusterType:
         raise NotImplemented        
@@ -37,8 +38,8 @@ class Strategy:
         return sum(self.task_done_time) >= self.task_duration
 
     @property
-    def config_str(self):
-        return ''
+    def config(self):
+        return {'name': self.NAME, 'deadline': self.deadline, 'task_duration': self.task_duration, 'restart_overhead': self.restart_overhead}
 
     @classmethod
     def from_args(cls, parser: 'configargparse.ArgumentParser') -> 'Strategy':
@@ -51,3 +52,9 @@ class Strategy:
     @classmethod
     def _from_args(cls, parser: 'configargparse.ArgumentParser') -> 'Strategy':
         raise NotImplementedError
+
+    @property
+    def config_str(self):
+        return json.dumps({'deadline': self.deadline, 'task_duration': self.task_duration, 'restart_overhead': self.restart_overhead})
+
+

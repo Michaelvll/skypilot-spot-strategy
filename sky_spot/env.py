@@ -80,11 +80,11 @@ class Env:
             }
 
     def __repr__(self) -> str:
-        return f'{self.NAME}({self.config_str})'
+        return f'{self.NAME}({json.dumps(self.config)})'
 
     @property
-    def config_str(self):
-        return ''
+    def config(self):
+        return dict()
 
     @classmethod
     def from_args(cls, parser: 'configargparse.ArgumentParser') -> 'Env':
@@ -97,6 +97,7 @@ class Env:
     @classmethod
     def _from_args(cls, parser: 'configargparse.ArgumentParser') -> 'Env':
         raise NotImplementedError
+
 
 
 class TraceEnv(Env):
@@ -112,11 +113,10 @@ class TraceEnv(Env):
         if self.timestamp >= len(self.trace):
             raise ValueError('Timestamp out of range')
         return not self.trace[self.timestamp]
-        
 
     @property
-    def config_str(self):
-        return json.dumps({'trace_file': self._trace_file})
+    def config(self) -> dict:
+        return {'name': self.NAME, 'trace_file': self._trace_file, 'metadata': self.trace.metadata}
 
     @classmethod
     def _from_args(cls, parser: 'configargparse.ArgumentParser') -> 'TraceEnv':
@@ -124,3 +124,4 @@ class TraceEnv(Env):
         group.add_argument('--trace-file', type=str, help='Folder containing the trace')
         args, _ = parser.parse_known_args()
         return cls(args.trace_file)
+    
