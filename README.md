@@ -2,8 +2,8 @@
 Experiments for SkyPilot Spot Strategy
 
 ```
-python --strategy-config configs/strategy/strawman/ddl-100.yaml \
-    --env-config configs/env/trace/default.yaml \
+python ./main.py --env-config configs/env/trace/default.yaml \
+    --strategy-config configs/strategy/strawman/default.yaml \
     --config configs/exp.yaml
 ```
 
