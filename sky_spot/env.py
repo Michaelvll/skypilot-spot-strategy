@@ -18,8 +18,8 @@ class Env:
         self.cluster_type_histroy = []
         self.cluster_type = ClusterType.NONE
         self.gap_seconds = gap_seconds
-        self.timestamp = 0
-        self.observed_timestamp = -1
+        self.tick = 0
+        self.observed_tick = -1
     
     def __init_subclass__(cls) -> None:
         assert cls.NAME not in cls.SUBCLASSES and cls.NAME != 'abstract', f'Name {cls.NAME} already exists'
@@ -35,24 +35,24 @@ class Env:
         """
         Returns the cluster type (at last time gap) and whether spot is available
         """
-        assert self.observed_timestamp == self.timestamp - 1, (self.observed_timestamp, self.timestamp)
-        self.observed_timestamp = self.timestamp
+        assert self.observed_tick == self.tick - 1, (self.observed_tick, self.tick)
+        self.observed_tick = self.tick
         has_spot = self.spot_available()
         last_cluster_type = self.cluster_type
         self.cluster_type_histroy.append(last_cluster_type)
 
         if self.cluster_type == ClusterType.SPOT and not has_spot:
-            print('Preempted at', self.timestamp)
+            print('Preempted at', self.tick)
             self.cluster_type = ClusterType.NONE
         return last_cluster_type, has_spot
 
     def step(self, request_type: ClusterType):
-        if self.observed_timestamp != self.timestamp:
+        if self.observed_tick != self.tick:
             self.observe()
         if request_type == ClusterType.SPOT and not self.spot_available():
             raise ValueError('Spot not available')
         new_cluster_type = self._step(request_type)
-        self.timestamp += 1
+        self.tick += 1
         return new_cluster_type
 
 
@@ -62,7 +62,7 @@ class Env:
 
     @property
     def elapsed_seconds(self) -> float:
-        return self.timestamp * self.gap_seconds
+        return self.tick * self.gap_seconds
 
     @property
     def accumulated_cost(self) -> float:
@@ -71,10 +71,10 @@ class Env:
     
     def info(self) -> dict:
         # Step should have been called
-        assert self.timestamp == self.observed_timestamp + 1
+        assert self.tick == self.observed_tick + 1
         return {
-                'Timestamp': self.timestamp - 1,
-                'Elapsed': (self.timestamp - 1) * self.gap_seconds,
+                'Timestamp': self.tick - 1,
+                'Elapsed': (self.tick - 1) * self.gap_seconds,
                 'Cost': self.accumulated_cost,
                 'ClusterType': self.cluster_type.value,
             }
@@ -110,9 +110,9 @@ class TraceEnv(Env):
         super().__init__(self.trace.gap_seconds)
 
     def spot_available(self) -> bool:
-        if self.timestamp >= len(self.trace):
+        if self.tick >= len(self.trace):
             raise ValueError('Timestamp out of range')
-        return not self.trace[self.timestamp]
+        return not self.trace[self.tick]
 
     @property
     def config(self) -> dict:

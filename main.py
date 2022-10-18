@@ -8,24 +8,10 @@ from sky_spot.strategies import strategy as strategy_lib
 
 wandb.init(project='sky-spot')
 
-def plot_step(env, history, name='RequestType'):
-    request_types = [h[name] for h in history]
-    plot_trace = {
-        "x": [env.gap_seconds * i / 3600.0 for i in range(len(request_types))],
-        "y": request_types,
-        "line": {"shape": 'hv'},
-        "mode": 'lines',
-        "name": 'value',
-        "type": 'scatter'
-        }
-    div = plotly.offline.plot({'data': [plot_trace]}, output_type='div', auto_open=False)
-    wandb.log({f'Type/{name}': wandb.Html(div)})
-
-
 def simulate(env: env_lib.Env, strategy: strategy_lib.Strategy):
     history = []
     while not strategy.task_done:
-        request_type = strategy.step(env)
+        request_type = strategy.step()
         env.step(request_type)
         info = {
             'RequestType': request_type.value,
@@ -34,9 +20,8 @@ def simulate(env: env_lib.Env, strategy: strategy_lib.Strategy):
         }
         history.append(info)
         wandb.log(info)
-        if env.timestamp % 100 == 0:
-            print(f'==> Timestamp: {env.timestamp}')
-    # plot_step(env, history, name='ClusterType')
+        if env.tick % 100 == 0:
+            print(f'==> Timestamp: {env.tick}')
     
 
 def main():
@@ -50,6 +35,7 @@ def main():
 
     env = env_lib.Env.from_args(parser)
     strategy = strategy_lib.Strategy.from_args(parser)
+    strategy.register_env(env)
 
     args, _ = parser.parse_known_args()
 
@@ -58,7 +44,7 @@ def main():
     print(strategy)
 
     trace_file = args.trace_file.split('/')[-1].split('.')[0]
-    wandb.run.name = f'{strategy.NAME}-{env.NAME}-{trace_file}-ddl={args.deadline_hours}-dur={args.task_duration_hours}-over={args.restart_overhead_hours}'
+    wandb.run.name = f'{strategy.name}-{env.NAME}-{trace_file}-ddl={args.deadline_hours}-dur={args.task_duration_hours}-over={args.restart_overhead_hours}'
     wandb.run.save()
     wandb.config.update(args)
     wandb.config.update({'env_metadata': env.config})

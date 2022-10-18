@@ -22,6 +22,10 @@ class Strategy:
         self.remaining_restart_overhead = 0
         self.task_done_time = []
 
+        self.env = None
+
+    def register_env(self, env):
+        self.env = env
 
     def __init_subclass__(cls):
         assert cls.NAME not in cls.SUBCLASSES and cls.NAME != 'abstract', f'Name {cls.NAME} already exists'
@@ -30,7 +34,7 @@ class Strategy:
     def __repr__(self) -> str:
         return f'{self.NAME}({json.dumps(self.config)})'
 
-    def step(self, env: 'env.Env') -> ClusterType:
+    def step(self) -> ClusterType:
         raise NotImplemented        
     
     @property
@@ -39,7 +43,7 @@ class Strategy:
 
     @property
     def config(self):
-        return {'name': self.NAME, 'deadline': self.deadline, 'task_duration': self.task_duration, 'restart_overhead': self.restart_overhead}
+        return {'name': self.NAME, 'deadline': self.deadline, 'task_duration': self.task_duration, 'restart_overhead': self.restart_overhead, 'env': self.env.config}
 
     @classmethod
     def from_args(cls, parser: 'configargparse.ArgumentParser') -> 'Strategy':
@@ -49,12 +53,10 @@ class Strategy:
         cls = cls.SUBCLASSES[args.strategy]
         return cls._from_args(parser)
 
+    @property
+    def name(self):
+        return self.NAME
+
     @classmethod
     def _from_args(cls, parser: 'configargparse.ArgumentParser') -> 'Strategy':
         raise NotImplementedError
-
-    @property
-    def config_str(self):
-        return json.dumps({'deadline': self.deadline, 'task_duration': self.task_duration, 'restart_overhead': self.restart_overhead})
-
-

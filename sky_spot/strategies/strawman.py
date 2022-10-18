@@ -1,12 +1,8 @@
 import argparse
-import json
-import typing
 
 from sky_spot.strategies import strategy
 from sky_spot.utils import ClusterType
 
-if typing.TYPE_CHECKING:
-    from sky_spot import env
 
 class StrawmanStrategy(strategy.Strategy):
     NAME = 'strawman'
@@ -14,7 +10,10 @@ class StrawmanStrategy(strategy.Strategy):
     def __init__(self, args):
         super().__init__(args.deadline_hours, args.task_duration_hours, args.restart_overhead_hours)
 
-    def step(self, env: 'env.Env') -> ClusterType:
+    def step(self) -> ClusterType:
+        assert self.env is not None, 'Environment not registered'
+        # Realize the information of the last gap
+        env = self.env
         last_cluster_type, has_spot = env.observe()
         if last_cluster_type == ClusterType.NONE:
             self.task_done_time.append(0)
@@ -26,6 +25,7 @@ class StrawmanStrategy(strategy.Strategy):
             task_done_time = min(task_done_time, remaining_task_time)
             self.task_done_time.append(task_done_time)
 
+        # Make decision for the gap starting from env.tick
         remaining_time = self.deadline - env.elapsed_seconds
         remaining_task_time = self.task_duration - sum(self.task_done_time)
         if has_spot:
@@ -35,7 +35,7 @@ class StrawmanStrategy(strategy.Strategy):
 
 
         if remaining_task_time + self.restart_overhead >= remaining_time:
-            print(f'{env.timestamp}: Deadline reached, switch to on-demand')
+            print(f'{env.tick}: Deadline reached, switch to on-demand')
             # We need to finish it on time by switch to on-demand
             request_type = ClusterType.ON_DEMAND
         
