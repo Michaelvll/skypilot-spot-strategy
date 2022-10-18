@@ -1,23 +1,25 @@
 import configargparse
 
-import plotly
 import wandb
 
 from sky_spot import env as env_lib
 from sky_spot.strategies import strategy as strategy_lib
+from sky_spot.utils import ClusterType
 
 wandb.init(project='sky-spot')
 
 def simulate(env: env_lib.Env, strategy: strategy_lib.Strategy):
     history = []
+    last_request_type = ClusterType.NONE
     while not strategy.task_done:
         request_type = strategy.step()
         env.step(request_type)
         info = {
-            'RequestType': request_type.value,
+            'RequestType': last_request_type.value,
             **env.info(),
             **strategy.info(),
         }
+        last_request_type = request_type
         history.append(info)
         wandb.log(info)
         if env.tick % 100 == 0:

@@ -76,7 +76,7 @@ class Env:
                 'Timestamp': self.tick - 1,
                 'Elapsed': (self.tick - 1) * self.gap_seconds,
                 'Cost': self.accumulated_cost,
-                'ClusterType': self.cluster_type.value,
+                'ClusterType': self.cluster_type_histroy[-1].value if self.cluster_type_histroy else ClusterType.NONE.value,
             }
 
     def __repr__(self) -> str:

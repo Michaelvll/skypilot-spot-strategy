@@ -17,10 +17,14 @@ class PairAmortizeStrategy(strategy.Strategy):
         self.pair_interval = args.pair_interval_hours * 3600
         self.num_pairs = math.ceil(self.deadline / self.pair_interval)
 
+        self.use_avg_gain = args.use_avg_gain
+
         self.pair_task_duration = 1.0 * self.task_duration / self.num_pairs
         self.pair_gap_counts = None
         self.pair_index = 0
+
         self.previous_gain_seconds = 0
+        self.avg_gain = 0
         
     def register_env(self, env: 'env.Env'):
         super().register_env(env)
@@ -51,6 +55,7 @@ class PairAmortizeStrategy(strategy.Strategy):
             last_pair_gain = sum(self.task_done_time[-self.pair_gap_counts:]) - self.pair_task_duration
             print(f'==> {self.env.tick}: Pair {self.pair_index} starts (last gain: {last_pair_gain})')
             self.previous_gain_seconds += last_pair_gain
+            self.avg_gain = self.previous_gain_seconds / (self.num_pairs - self.pair_index)
 
         assert self.pair_index < self.num_pairs, ('Pair index out of range', self.pair_index, self.num_pairs)
 
@@ -68,7 +73,10 @@ class PairAmortizeStrategy(strategy.Strategy):
 
 
         switch_task_remaining = remaining_task_time + self.restart_overhead
-        pair_available_time = pair_remaining_time + self.previous_gain_seconds
+        if self.use_avg_gain:
+            pair_available_time = pair_remaining_time + self.avg_gain
+        else:
+            pair_available_time = pair_remaining_time + self.previous_gain_seconds
         if switch_task_remaining >= pair_available_time:
             print(f'{env.tick}: Deadline reached, switch to on-demand '
                 f'(task remaining: {switch_task_remaining/3600:.2f}, pair avilable: {pair_available_time/3600:.2f})')
@@ -93,12 +101,14 @@ class PairAmortizeStrategy(strategy.Strategy):
     def _from_args(cls, parser: 'argparse.ArgumentParser') -> 'PairAmortizeStrategy':
         group = parser.add_argument_group('PairAmortizeStrategy')
         group.add_argument('--pair-interval-hours', type=int, default=1)
+        group.add_argument('--use-avg-gain', action='store_true')
         args, _ = parser.parse_known_args()
         return cls(args)
     
     @property
     def name(self):
-        return f'{self.NAME}_{self.pair_interval/3600}h'
+        use_avg_str = '_avg' if self.use_avg_gain else ''
+        return f'{self.NAME}{use_avg_str}_{self.pair_interval/3600}h'
 
     @property
     def config(self):
@@ -108,6 +118,7 @@ class PairAmortizeStrategy(strategy.Strategy):
             pair_interval=self.pair_interval,
             pair_task_duration=self.pair_task_duration,
             pair_gap_counts=self.pair_gap_counts,
+            use_avg_gain=self.use_avg_gain,
         )
 
 
