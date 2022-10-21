@@ -1,9 +1,13 @@
 python ./main.py --strategy=pair_amortize \
-                --use_avg_gain=True \
                 --pair-interval-hours=8 \
-                --env=trace
-                --trace-file=data/poisson/gap_1200_hourly-rate_0.1/1.json \
+                --use-avg-gain \
+                --env trace \
+                --trace-file data/poisson/gap_1200-hourly_rate_0.5/1.json \
                 --restart-overhead-hours=0.2 \
-                --deadline-hours=24 \
-                --task-duration-hours=20
+                --deadline-hours=104 \
+                --task-duration-hours=96
 
+
+
+                # --pair-interval-hours=8 \
+                # --use-avg-gain \

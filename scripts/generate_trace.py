@@ -36,7 +36,7 @@ class PoissonTraceGenerator(TraceGenerator):
         print(f'hourly_rate: {self.hourly_rate:.2f}, gap_rate ({gap_seconds/3600:.2f} hours): {self.gap_rate:.2f}')
 
         self.length = length
-        self.output_folder = self.trace_folder / f'gap_{self.gap_seconds}_hourly-rate_{hourly_rate}'
+        self.output_folder = self.trace_folder / f'gap_{self.gap_seconds}-hourly_rate_{hourly_rate}'
         self.output_folder.mkdir(parents=True, exist_ok=True)
 
     def generate(self, num_traces: int):
@@ -71,6 +71,5 @@ if __name__ == __name__:
     parser.add_argument('--num-traces', type=int, default=100)
     args = parser.parse_args()
     
-    args.trace_folder = os.path.join(args.trace_folder, f'gap_{args.gap_seconds}-rate_{args.rate}')
     generator = GENERATORS[args.generator](args.trace_folder, args.gap_seconds, args.rate, args.length)
     generator.generate(args.num_traces)
