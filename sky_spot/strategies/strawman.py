@@ -8,22 +8,10 @@ class StrawmanStrategy(strategy.Strategy):
     NAME = 'strawman'
 
     def __init__(self, args):
-        super().__init__(args.deadline_hours, args.task_duration_hours, args.restart_overhead_hours)
+        super().__init__(args)
 
-    def step(self) -> ClusterType:
-        assert self.env is not None, 'Environment not registered'
-        # Realize the information of the last gap
+    def _step(self, last_cluster_type: ClusterType, has_spot: bool) -> ClusterType:
         env = self.env
-        last_cluster_type, has_spot = env.observe()
-        if last_cluster_type == ClusterType.NONE:
-            self.task_done_time.append(0)
-        else:
-            task_done_time = max(env.gap_seconds - self.remaining_restart_overhead, 0)
-            self.remaining_restart_overhead -= (env.gap_seconds - task_done_time)
-            
-            remaining_task_time = self.task_duration - sum(self.task_done_time)
-            task_done_time = min(task_done_time, remaining_task_time)
-            self.task_done_time.append(task_done_time)
 
         # Make decision for the gap starting from env.tick
         remaining_time = self.deadline - env.elapsed_seconds

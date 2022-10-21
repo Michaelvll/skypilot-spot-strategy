@@ -12,7 +12,7 @@ class PairAmortizeStrategy(strategy.Strategy):
     NAME = 'pair_amortize'
 
     def __init__(self, args):
-        super().__init__(args.deadline_hours, args.task_duration_hours, args.restart_overhead_hours)
+        super().__init__(args)
 
         self.pair_interval = args.pair_interval_hours * 3600
         self.num_pairs = math.ceil(self.deadline / self.pair_interval)
@@ -33,23 +33,8 @@ class PairAmortizeStrategy(strategy.Strategy):
         assert abs(self.pair_gap_counts * env.gap_seconds - self.pair_interval) < 1e-4, (self.pair_gap_counts, env.gap_seconds)
         
 
-    def step(self) -> ClusterType:
-        # Realize the information of the last gap
+    def _step(self, last_cluster_type: ClusterType, has_spot: bool) -> ClusterType:
         env = self.env
-        last_cluster_type, has_spot = env.observe()
-        if last_cluster_type == ClusterType.NONE:
-            self.task_done_time.append(0)
-        else:
-            task_done_time = max(env.gap_seconds - self.remaining_restart_overhead, 0)
-            self.remaining_restart_overhead -= (env.gap_seconds - task_done_time)
-            
-            remaining_task_time = self.task_duration - sum(self.task_done_time)
-            task_done_time = min(task_done_time, remaining_task_time)
-            self.task_done_time.append(task_done_time)
-
-        if self.task_done:
-            return ClusterType.NONE
-
         # Make decision for the gap starting from env.tick
         pair_end_seconds = (self.pair_index + 1) * self.pair_interval
         if pair_end_seconds - self.env.elapsed_seconds < 1e-2:
