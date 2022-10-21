@@ -88,7 +88,7 @@ class Env:
 
     @classmethod
     def from_args(cls, parser: 'configargparse.ArgumentParser') -> 'Env':
-        parser.add_argument(f'--env-config', type=str, default=None, is_config_file=True, required=False)
+        # parser.add_argument(f'--env-config', type=str, default=None, is_config_file=True, required=False)
         parser.add_argument(f'--env', type=str, default='trace', choices=cls.SUBCLASSES.keys())
         args, _ = parser.parse_known_args()
         cls = cls.SUBCLASSES[args.env]

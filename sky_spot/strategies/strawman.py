@@ -33,11 +33,16 @@ class StrawmanStrategy(strategy.Strategy):
         else:
             request_type = ClusterType.NONE
 
-
+        current_cluster_type = env.cluster_type
         if remaining_task_time + self.restart_overhead >= remaining_time:
-            print(f'{env.tick}: Deadline reached, switch to on-demand')
-            # We need to finish it on time by switch to on-demand
-            request_type = ClusterType.ON_DEMAND
+            if current_cluster_type == ClusterType.SPOT:
+                # Keep the spot VM until preemption
+                print(f'{env.tick}: Deadline reached, keep spot until preemption')
+                request_type = ClusterType.SPOT
+            else:
+                print(f'{env.tick}: Deadline reached, switch to on-demand')
+                # We need to finish it on time by switch to on-demand
+                request_type = ClusterType.ON_DEMAND
         
         current_cluster_type = last_cluster_type
         if last_cluster_type == ClusterType.SPOT and not has_spot:

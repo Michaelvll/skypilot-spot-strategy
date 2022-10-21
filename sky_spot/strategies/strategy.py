@@ -47,7 +47,7 @@ class Strategy:
 
     @classmethod
     def from_args(cls, parser: 'configargparse.ArgumentParser') -> 'Strategy':
-        parser.add_argument(f'--strategy-config', type=str, default=None, is_config_file=True, required=False)
+        # parser.add_argument(f'--strategy-config', type=str, default=None, is_config_file=True, required=False)
         parser.add_argument(f'--strategy', type=str, default='strawman', choices=cls.SUBCLASSES.keys())
         args, _ = parser.parse_known_args()
         cls = cls.SUBCLASSES[args.strategy]
