@@ -67,7 +67,7 @@ class Env:
     @property
     def accumulated_cost(self) -> float:
         """Accumulated cost of the environment"""
-        return sum(COSTS[cluster_type] for cluster_type in self.cluster_type_histroy)
+        return sum(COSTS[cluster_type] * self.gap_seconds / 3600 for cluster_type in self.cluster_type_histroy)
     
     def info(self) -> dict:
         # Step should have been called

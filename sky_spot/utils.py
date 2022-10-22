@@ -13,3 +13,10 @@ COSTS = {
     ClusterType.SPOT: 0.9731,
     ClusterType.NONE: 0,
 }
+
+# Price for p2.xlarge (single K80) on us-east-1
+COSTS = {
+    ClusterType.ON_DEMAND: 0.9,
+    ClusterType.SPOT: 0.3384,
+    ClusterType.NONE: 0,
+}

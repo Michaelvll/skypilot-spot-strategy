@@ -60,13 +60,16 @@ class PairAmortizeStrategy(strategy.Strategy):
             request_type = ClusterType.NONE
 
 
-        switch_task_remaining = math.ceil((remaining_task_time + self.restart_overhead) / self.env.gap_seconds) * self.env.gap_seconds
+        switch_task_remaining = (remaining_task_time + self.restart_overhead)
+        if self.pair_index == self.num_pairs - 1:
+            switch_task_remaining = math.ceil(switch_task_remaining / self.env.gap_seconds) * self.env.gap_seconds
         if self.use_avg_gain:
             pair_available_time = pair_remaining_time + self.avg_gain
         else:
             pair_available_time = pair_remaining_time + self.previous_gain_seconds
         current_cluster_type = env.cluster_type
-        if switch_task_remaining >= pair_available_time:
+        total_task_remaining = math.ceil((self.task_duration - sum(self.task_done_time) + self.restart_overhead) / self.env.gap_seconds) * self.env.gap_seconds
+        if switch_task_remaining >= pair_available_time or total_task_remaining >= self.deadline - env.elapsed_seconds:
             if current_cluster_type == ClusterType.SPOT:
                 # Keep the spot VM until preemption
                 request_type = ClusterType.SPOT

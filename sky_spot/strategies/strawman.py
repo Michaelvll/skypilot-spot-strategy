@@ -1,4 +1,5 @@
 import argparse
+import math
 
 from sky_spot.strategies import strategy
 from sky_spot.utils import ClusterType
@@ -22,7 +23,8 @@ class StrawmanStrategy(strategy.Strategy):
             request_type = ClusterType.NONE
 
         current_cluster_type = env.cluster_type
-        if remaining_task_time + self.restart_overhead >= remaining_time:
+        total_task_remaining = math.ceil((remaining_task_time + self.restart_overhead) / self.env.gap_seconds) * self.env.gap_seconds
+        if total_task_remaining >= remaining_time:
             if current_cluster_type == ClusterType.SPOT:
                 # Keep the spot VM until preemption
                 print(f'{env.tick}: Deadline reached, keep spot until preemption')
