@@ -3,6 +3,7 @@ import argparse
 from datetime import datetime
 import signal
 import json
+import os
 import subprocess
 import sys
 import time
@@ -10,7 +11,8 @@ import time
 import ray
 
 
-instances = {}
+configs = []
+
 CLOCK = 0
 instance_types = {
     ("v100", 1): "p3.2xlarge",
@@ -25,10 +27,10 @@ instance_types = {
 }
 
 def signal_handler(sig, frame):
-    global instances
+    global configs
     # Clean up all instances when program is interrupted.
-    for (zone, gpu_type, num_gpus) in instances:
-        [instance_id, _] = instances[(zone, gpu_type, num_gpus)]
+    for (zone, gpu_type, num_gpus) in configs:
+        [instance_id, _] = configs[(zone, gpu_type, num_gpus)]
         if instance_id is not None:
             delete_spot_instance(zone, instance_id)
     sys.exit(0)
@@ -73,45 +75,51 @@ def launch_spot_instance(zone, gpu_type, num_gpus):
                 instance_id, num_gpus, gpu_type, zone))
             return True
         except Exception as e:
-            print(e)
+            print(type(e), e)
             pass
         
-        print("[%s] Instance with %d GPU(s) of type %s creation failed" % (
-            datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z'), num_gpus, gpu_type))
+        print("[%s] Instance with %d GPU(s) of type %s creation in zone %s failed" % (
+            datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z'), num_gpus, gpu_type, zone))
         return False
     finally:
-        if spot_instance_request_id is not None:
+        if instance_id is not None:
+            delete_spot_instance(zone, instance_id)
+        if spot_instance_request_id is not None and instance_id is None:
             command = """aws ec2 cancel-spot-instance-requests --spot-instance-request-ids %s""" % (
                 spot_instance_request_id)
             subprocess.check_output(command, shell=True)
-        if instance_id is not None:
-            delete_spot_instance(zone, instance_id)
-
+            print("[%s] Successfully cancelled spot request %s" % (
+                datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z'), spot_instance_request_id))
+        print('ready')
 
 
 def main(args):
-    global instances
+    global configs
     global CLOCK
     ray.init()
     
     for zone in args.zones:
         for gpu_type in args.gpu_types:
             for num_gpus in args.all_num_gpus:
-                instances[(zone, gpu_type, num_gpus)] = [None, False]
+                configs[(zone, gpu_type, num_gpus)] = [None, False]
 
+    start_date = datetime.now().strftime('%Y-%m-%dT%H-%M')
+    folder = f'traces/{start_date}'
+    os.makedirs(folder, exist_ok=True)
     while True:
+        print(f"Clock: {CLOCK}")
         # Spin in a loop; try to launch spot instances of particular type if
         # not running already. Check on status of instances, and update to
         # "not running" as needed.
-        workers = [launch_spot_instance.remote(*instance) for instance in instances]
+        workers = [launch_spot_instance.remote(*config) for config in configs]
         dt = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z')
 
         time.sleep(600)
-        ready, not_ready = ray.wait(workers, timeout=0)
-        assert len(not_ready) == 0, not_ready
-        for i, (zone, gpu_type, num_gpus) in enumerate(instances):
-            fail = not ray.get(ready[i])
-            with open(f'availability_logs/{zone}_{gpu_type}_{num_gpus}.txt', 'a') as f:
+        ready, not_ready = ray.wait(workers, timeout=0.1, num_returns=len(workers))
+        assert len(not_ready) == 0, (ready, not_ready)
+        for i, (zone, gpu_type, num_gpus) in enumerate(configs):
+            fail = int(not ray.get(ready[i]))
+            with open(f'{folder}/{zone}_{gpu_type}_{num_gpus}.txt', 'a') as f:
                 print(f'{CLOCK},{dt},{fail}', file=f)
         CLOCK += 1
 
