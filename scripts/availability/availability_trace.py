@@ -11,7 +11,7 @@ import time
 import ray
 
 
-configs = []
+configs = {}
 
 CLOCK = 0
 instance_types = {
@@ -46,7 +46,7 @@ def delete_spot_instance(zone, instance_id):
     except:
         return
 
-@ray.remote
+@ray.remote(num_cpus=0.1)
 def launch_spot_instance(zone, gpu_type, num_gpus):
     instance_type = instance_types[(gpu_type, num_gpus)]
     with open("specification.json.template", 'r') as f1, open(f"specification-{zone}-{gpu_type}-{num_gpus}.json", 'w') as f2:
@@ -131,7 +131,7 @@ if __name__ == '__main__':
                         default=["us-west-2a", "us-west-2b"],
                         help='AWS availability zones')
     parser.add_argument('--gpu_types', type=str, nargs='+',
-                        default=["v100", "k80", "t4"],
+                        default=["v100", "k80"],
                         help='GPU types')
     parser.add_argument('--all_num_gpus', type=int, nargs='+',
                         default=[1, 8],
