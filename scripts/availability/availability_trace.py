@@ -46,7 +46,7 @@ def delete_spot_instance(zone, instance_id):
     except:
         return
 
-@ray.remote
+@ray.remote(num_gpus=0)
 def launch_spot_instance(zone, gpu_type, num_gpus):
     instance_type = instance_types[(gpu_type, num_gpus)]
     with open("specification.json.template", 'r') as f1, open(f"specification-{zone}-{gpu_type}-{num_gpus}.json", 'w') as f2:
