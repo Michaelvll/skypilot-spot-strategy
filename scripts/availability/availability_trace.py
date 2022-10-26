@@ -19,6 +19,9 @@ instance_types = {
     ("k80", 1): "p2.xlarge",
     ("k80", 8): "p2.8xlarge",
     ("k80", 16): "p2.16xlarge",
+    ("t4", 1): "g4dn.2xlarge",
+    ("t4", 4): "g4dn.12xlarge",
+    ("t4", 8): "g4dn.metal",
 }
 
 def signal_handler(sig, frame):
@@ -120,7 +123,7 @@ if __name__ == '__main__':
                         default=["us-west-2a", "us-west-2b"],
                         help='AWS availability zones')
     parser.add_argument('--gpu_types', type=str, nargs='+',
-                        default=["v100", "k80"],
+                        default=["v100", "k80", "t4"],
                         help='GPU types')
     parser.add_argument('--all_num_gpus', type=int, nargs='+',
                         default=[1, 8],
