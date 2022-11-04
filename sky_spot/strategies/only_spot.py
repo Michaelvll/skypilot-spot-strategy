@@ -26,7 +26,7 @@ class OnlySpotStrategy(strategy.Strategy):
         }
 
     @classmethod
-    def _from_args(cls, parser: 'argparse.ArgumentParser') -> 'OnDemandStrategy':
+    def _from_args(cls, parser: 'argparse.ArgumentParser') -> 'OnlySpotStrategy':
         group = parser.add_argument_group('OnDemandStrategy')
         args, _ = parser.parse_known_args()
         return cls(args)

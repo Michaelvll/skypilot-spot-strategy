@@ -47,7 +47,14 @@ class Strategy:
             remaining_task_time = self.task_duration - sum(self.task_done_time)
             task_done_time = min(task_done_time, remaining_task_time)
             self.task_done_time.append(task_done_time)
-        return self._step(last_cluster_type, has_spot)
+        request_type = self._step(last_cluster_type, has_spot)
+
+        current_cluster_type = last_cluster_type
+        if last_cluster_type == ClusterType.SPOT and not has_spot:
+            current_cluster_type = ClusterType.NONE
+        if current_cluster_type != request_type and request_type != ClusterType.NONE:
+            self.remaining_restart_overhead = self.restart_overhead
+        return request_type
     
     def _step(self, last_cluster_type: ClusterType, has_spot: bool) -> ClusterType:
         raise NotImplementedError

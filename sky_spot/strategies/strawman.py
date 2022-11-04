@@ -34,12 +34,6 @@ class StrawmanStrategy(strategy.Strategy):
                 # We need to finish it on time by switch to on-demand
                 request_type = ClusterType.ON_DEMAND
         
-        current_cluster_type = last_cluster_type
-        if last_cluster_type == ClusterType.SPOT and not has_spot:
-            current_cluster_type = ClusterType.NONE
-        if current_cluster_type != request_type and request_type != ClusterType.NONE:
-            self.remaining_restart_overhead = self.restart_overhead
-
         return request_type
 
     def info(self):
