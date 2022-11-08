@@ -1,3 +1,4 @@
+import math
 import json
 import typing
 from typing import Tuple
@@ -60,6 +61,10 @@ class Env:
         self.cluster_type = request_type
         return self.cluster_type
 
+    def get_trace_before_end(self, end: float) -> trace.Trace:
+        # Used for ideal strategy
+        raise NotImplementedError
+
     @property
     def elapsed_seconds(self) -> float:
         return self.tick * self.gap_seconds
@@ -113,6 +118,10 @@ class TraceEnv(Env):
         if self.tick >= len(self.trace):
             raise ValueError('Timestamp out of range')
         return not self.trace[self.tick]
+    
+    def get_trace_before_end(self, end_seconds: float) -> trace.Trace:
+        end_index = int(math.ceil(end_seconds / self.gap_seconds))
+        return self.trace[:end_index]
 
     @property
     def config(self) -> dict:
