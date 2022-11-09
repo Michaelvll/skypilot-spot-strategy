@@ -1,11 +1,9 @@
-for i in `seq 52 4 80`; do
-python ./main.py --strategy=ideal_ilp_overhead \
+python ./main.py --strategy=only_spot \
                 --env trace \
                 --restart-overhead-hours=0.1 \
                 --trace-file data/real/ping_based/us-west-2a_v100_1.txt \
-                --deadline-hours=$i \
+                --deadline-hours=1000 \
                 --task-duration-hours=48
-done
 
 
 
