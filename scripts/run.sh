@@ -1,8 +1,8 @@
-python ./main.py --strategy=strawman \
+python ./main.py --strategy=ideal_ilp_overhead \
                 --env trace \
-                --restart-overhead-hours=0 \
+                --restart-overhead-hours=0.5 \
                 --trace-file data/real/ping_based/us-west-2a_v100_1.txt \
-                --deadline-hours=48 \
+                --deadline-hours=64 \
                 --task-duration-hours=48
 
 
