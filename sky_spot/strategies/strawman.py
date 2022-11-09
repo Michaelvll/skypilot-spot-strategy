@@ -39,11 +39,6 @@ class StrawmanStrategy(strategy.Strategy):
         
         return request_type
 
-    def info(self):
-        return {
-            'Task/Done(seconds)': self.task_done_time[-1],
-            'Task/Remaining(seconds)': self.task_duration - sum(self.task_done_time),
-        }
 
     @classmethod
     def _from_args(cls, parser: 'argparse.ArgumentParser') -> 'StrawmanStrategy':

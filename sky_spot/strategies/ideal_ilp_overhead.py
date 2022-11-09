@@ -49,7 +49,7 @@ class IdealILPStrategy(strategy.Strategy):
                 prob += y[i] <= b[i + 1],           f"y[{i}] can be 1 only if b[{i+1}] is 1"
                 prob += y[i] <= 1 - b[i],           f"y[{i}] can be 1 only if b[{i}] is 0"
                 prob += y[i] >= b[i + 1] - b[i],    f"y[{i}] can be 1 only if b[{i+1}] is 1 and b[{i}] is 0"
-        H = self.restart_overhead * pulp.lpSum(x[i] + y[i] for i in range(self.total_gaps - 1))
+        H = self.restart_overhead * (pulp.lpSum(x[i] + y[i] for i in range(self.total_gaps - 1)) + 1) # +1 for the first gap
         prob +=  env.gap_seconds * pulp.lpSum(a[i] + b[i] for i in range(self.total_gaps)) >= H + self.task_duration, "Task duration"
 
         verbose = True
@@ -80,15 +80,12 @@ class IdealILPStrategy(strategy.Strategy):
                 self.plan.append(ClusterType.NONE)
 
     def _step(self, last_cluster_type: ClusterType, has_spot: bool) -> ClusterType:
+        if self.env.tick >= self.total_gaps:
+            return ClusterType.NONE
         request_cluster_type = self.plan[self.env.tick]        
         assert request_cluster_type != ClusterType.SPOT or has_spot
         return request_cluster_type
 
-    def info(self):
-        return {
-            'Task/Done(seconds)': self.task_done_time[-1],
-            'Task/Remaining(seconds)': self.task_duration - sum(self.task_done_time),
-        }
 
     @classmethod
     def _from_args(cls, parser: 'argparse.ArgumentParser') -> 'IdealILPStrategy':

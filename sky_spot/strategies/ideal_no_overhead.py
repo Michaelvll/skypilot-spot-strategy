@@ -30,12 +30,6 @@ class IdealNoOverheadStrategy(strategy.Strategy):
         
         return ClusterType.NONE
 
-    def info(self):
-        return {
-            'Task/Done(seconds)': self.task_done_time[-1],
-            'Task/Remaining(seconds)': self.task_duration - sum(self.task_done_time),
-        }
-
     @classmethod
     def _from_args(cls, parser: 'argparse.ArgumentParser') -> 'IdealNoOverheadStrategy':
         group = parser.add_argument_group('OnDemandStrategy')

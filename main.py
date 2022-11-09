@@ -24,6 +24,14 @@ def simulate(env: env_lib.Env, strategy: strategy_lib.Strategy):
         wandb.log(info)
         if env.tick % 100 == 0:
             print(f'==> Timestamp: {env.tick}')
+
+    strategy.step() # realize the last step
+    env.step(ClusterType.NONE)
+    info = {
+            'RequestType': ClusterType.NONE,
+            **env.info(),
+            **strategy.info(),
+        }
     
 
 def main():
