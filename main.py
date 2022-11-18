@@ -24,6 +24,14 @@ def simulate(env: env_lib.Env, strategy: strategy_lib.Strategy):
         wandb.log(info)
         if env.tick % 100 == 0:
             print(f'==> Timestamp: {env.tick}')
+
+    strategy.step() # realize the last step
+    env.step(ClusterType.NONE)
+    info = {
+            'RequestType': ClusterType.NONE,
+            **env.info(),
+            **strategy.info(),
+        }
     
 
 def main():
@@ -46,7 +54,10 @@ def main():
     print(strategy)
 
     trace_file = args.trace_file.split('/')[-1].split('.')[0]
-    wandb.run.name = f'{strategy.name}-{env.NAME}-{trace_file}-ddl={args.deadline_hours}-dur={args.task_duration_hours}-over={args.restart_overhead_hours}'
+    run_name = f'{strategy.name}-{env.NAME}-{trace_file}-ddl={args.deadline_hours}-dur={args.task_duration_hours}-over={args.restart_overhead_hours}'
+    if args.env_start_hours > 0:
+        run_name += f'-start={args.env_start_hours}h'
+    wandb.run.name = run_name
     wandb.run.save()
     wandb.config.update(args)
     wandb.config.update({'env_metadata': env.config})

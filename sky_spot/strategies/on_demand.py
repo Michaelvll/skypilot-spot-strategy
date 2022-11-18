@@ -17,11 +17,6 @@ class OnDemandStrategy(strategy.Strategy):
         # Make decision for the gap starting from env.tick
         return ClusterType.ON_DEMAND
 
-    def info(self):
-        return {
-            'Task/Done(seconds)': self.task_done_time[-1],
-            'Task/Remaining(seconds)': self.task_duration - sum(self.task_done_time),
-        }
 
     @classmethod
     def _from_args(cls, parser: 'argparse.ArgumentParser') -> 'OnDemandStrategy':

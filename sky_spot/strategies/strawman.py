@@ -33,14 +33,12 @@ class StrawmanStrategy(strategy.Strategy):
                 print(f'{env.tick}: Deadline reached, switch to on-demand')
                 # We need to finish it on time by switch to on-demand
                 request_type = ClusterType.ON_DEMAND
+            if self.restart_overhead == 0 and has_spot:
+                # We can switch to spot without cost.
+                request_type = ClusterType.SPOT
         
         return request_type
 
-    def info(self):
-        return {
-            'Task/Done(seconds)': self.task_done_time[-1],
-            'Task/Remaining(seconds)': self.task_duration - sum(self.task_done_time),
-        }
 
     @classmethod
     def _from_args(cls, parser: 'argparse.ArgumentParser') -> 'StrawmanStrategy':

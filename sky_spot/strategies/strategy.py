@@ -61,7 +61,7 @@ class Strategy:
     
     @property
     def task_done(self):
-        return sum(self.task_done_time) >= self.task_duration or self.env.elapsed_seconds >= self.deadline
+        return sum(self.task_done_time) >= self.task_duration
 
     @property
     def config(self):
@@ -74,6 +74,12 @@ class Strategy:
         args, _ = parser.parse_known_args()
         cls = cls.SUBCLASSES[args.strategy]
         return cls._from_args(parser)
+
+    def info(self):
+        return {
+            'Task/Done(seconds)': self.task_done_time[-1],
+            'Task/Remaining(seconds)': self.task_duration - sum(self.task_done_time),
+        }
 
     @property
     def name(self):

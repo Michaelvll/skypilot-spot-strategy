@@ -1,3 +1,4 @@
+import math
 import json
 import typing
 from typing import Tuple
@@ -60,6 +61,10 @@ class Env:
         self.cluster_type = request_type
         return self.cluster_type
 
+    def get_trace_before_end(self, end: float) -> trace.Trace:
+        # Used for ideal strategy
+        raise NotImplementedError
+
     @property
     def elapsed_seconds(self) -> float:
         return self.tick * self.gap_seconds
@@ -103,25 +108,36 @@ class Env:
 class TraceEnv(Env):
     NAME = 'trace'
 
-    def __init__(self, trace_file: str):
+    def __init__(self, trace_file: str, env_start_hours: float):
+        
         self._trace_file = trace_file
         self.trace = trace.Trace.from_file(trace_file)
+
+        self._start_index = 0
+        if env_start_hours > 0:
+            self._start_index = int(math.ceil(env_start_hours * 3600 / self.trace.gap_seconds))
         
         super().__init__(self.trace.gap_seconds)
 
     def spot_available(self) -> bool:
-        if self.tick >= len(self.trace):
+        tick = self.tick + self._start_index
+        if tick >= len(self.trace):
             raise ValueError('Timestamp out of range')
-        return not self.trace[self.tick]
+        return not self.trace[tick]
+    
+    def get_trace_before_end(self, end_seconds: float) -> trace.Trace:
+        end_index = int(math.ceil(end_seconds / self.gap_seconds))
+        return self.trace[self._start_index:end_index+self._start_index]
 
     @property
     def config(self) -> dict:
-        return {'name': self.NAME, 'trace_file': self._trace_file, 'metadata': self.trace.metadata}
+        return {'name': self.NAME, 'trace_file': self._trace_file, 'start_index': self._start_index, 'metadata': self.trace.metadata}
 
     @classmethod
     def _from_args(cls, parser: 'configargparse.ArgumentParser') -> 'TraceEnv':
         group = parser.add_argument_group('TraceEnv')
         group.add_argument('--trace-file', type=str, help='Folder containing the trace')
+        group.add_argument('--env-start-hours', type=float, default=0, help='Start hours of the trace')
         args, _ = parser.parse_known_args()
-        return cls(args.trace_file)
+        return cls(args.trace_file, args.env_start_hours)
     
