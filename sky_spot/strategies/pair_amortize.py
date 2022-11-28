@@ -39,11 +39,20 @@ class PairAmortizeStrategy(strategy.Strategy):
         pair_end_seconds = (self.pair_index + 1) * self.pair_interval
         if pair_end_seconds - self.env.elapsed_seconds < 1e-2:
             self.pair_index += 1
+            if self.pair_index >= self.num_pairs:
+                delta = self.task_duration - sum(self.task_done_time)
+                assert delta < env.gap_seconds, delta
+                self.task_done_time.append(delta)
+                return ClusterType.NONE
             last_pair_gain = sum(self.task_done_time[-self.pair_gap_counts:]) - self.pair_task_duration
             self.previous_gain_seconds += last_pair_gain
             print(f'==> {self.env.tick}: Pair {self.pair_index} starts (last gain: {last_pair_gain/3600:.2f}, previous_gain: {self.previous_gain_seconds/3600:.2f})')
             print(f'==> Task done time: {sum(self.task_done_time)/3600:.2f}')
             self.avg_gain = self.previous_gain_seconds / (self.num_pairs - self.pair_index)
+        if self.pair_index >= self.num_pairs:
+            delta = self.task_duration - sum(self.task_done_time)
+            assert delta < 1e-2, delta
+            return ClusterType.NONE
 
         assert self.pair_index < self.num_pairs, ('Pair index out of range', self.pair_index, self.num_pairs)
 
@@ -68,14 +77,14 @@ class PairAmortizeStrategy(strategy.Strategy):
         else:
             pair_available_time = pair_remaining_time + self.previous_gain_seconds
         current_cluster_type = env.cluster_type
-        total_task_remaining = math.ceil((self.task_duration - sum(self.task_done_time) + self.restart_overhead) / self.env.gap_seconds) * self.env.gap_seconds
-        if switch_task_remaining >= pair_available_time or total_task_remaining >= self.deadline - env.elapsed_seconds:
+        total_task_remaining = math.ceil((self.task_duration - sum(self.task_done_time) + self.restart_overhead) / env.gap_seconds) * env.gap_seconds
+        if switch_task_remaining > pair_available_time - env.gap_seconds or total_task_remaining > self.deadline - env.elapsed_seconds - env.gap_seconds:
             if current_cluster_type == ClusterType.SPOT:
                 # Keep the spot VM until preemption
                 request_type = ClusterType.SPOT
             else:
                 print(f'{env.tick}: Deadline reached, switch to on-demand '
-                    f'(task remaining: {switch_task_remaining/3600:.2f}, pair avilable: {pair_available_time/3600:.2f})')
+                    f'(task remaining: {(self.task_duration - sum(self.task_done_time))/3600:.2f}, pair avilable: {pair_available_time/3600:.2f})')
                 # We need to finish it on time by switch to on-demand
                 request_type = ClusterType.ON_DEMAND
         
