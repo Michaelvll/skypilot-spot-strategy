@@ -11,9 +11,9 @@ if typing.TYPE_CHECKING:
 class PairAmortizeStrategy(strategy.Strategy):
     NAME = 'pair_amortize'
 
-    def __init__(self, args):
-        super().__init__(args)
-
+    def reset(self):
+        super().reset()
+        args = self.args
         self.pair_interval = args.pair_interval_hours * 3600
         self.num_pairs = math.ceil(self.deadline / self.pair_interval)
 

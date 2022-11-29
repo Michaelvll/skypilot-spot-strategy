@@ -14,6 +14,11 @@ class Strategy:
     SUBCLASSES = {}
 
     def __init__(self, args):
+        self.args = args
+        self.reset()
+
+    def reset(self):
+        args = self.args
         self.deadline = args.deadline_hours * 3600
         self.task_duration = args.task_duration_hours * 3600
 
@@ -65,7 +70,7 @@ class Strategy:
 
     @property
     def config(self):
-        return {'name': self.NAME, 'deadline': self.deadline, 'task_duration': self.task_duration, 'restart_overhead': self.restart_overhead, 'env': self.env.config}
+        return {'name': self.NAME, 'deadline': self.deadline, 'task_duration': self.task_duration, 'restart_overhead': self.restart_overhead}
 
     @classmethod
     def from_args(cls, parser: 'configargparse.ArgumentParser') -> 'Strategy':

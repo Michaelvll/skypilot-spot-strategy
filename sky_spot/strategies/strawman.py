@@ -8,9 +8,6 @@ from sky_spot.utils import ClusterType
 class StrawmanStrategy(strategy.Strategy):
     NAME = 'strawman'
 
-    def __init__(self, args):
-        super().__init__(args)
-
     def _step(self, last_cluster_type: ClusterType, has_spot: bool) -> ClusterType:
         env = self.env
 

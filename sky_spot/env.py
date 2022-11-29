@@ -1,7 +1,8 @@
 import math
 import json
+import os
 import typing
-from typing import Tuple
+from typing import List, Tuple, Union
 
 from sky_spot import trace
 from sky_spot.utils import ClusterType, COSTS
@@ -15,10 +16,13 @@ class Env:
     SUBCLASSES = {}
 
     def __init__(self, gap_seconds: float):
+        self.gap_seconds = gap_seconds
+        self.reset()
+
+    def reset(self):
         # dones not include the cluster_type for the current timestamp - 1 -> timestamp, until observed on timestamp
         self.cluster_type_histroy = []
         self.cluster_type = ClusterType.NONE
-        self.gap_seconds = gap_seconds
         self.tick = 0
         self.observed_tick = -1
     
@@ -134,10 +138,16 @@ class TraceEnv(Env):
         return {'name': self.NAME, 'trace_file': self._trace_file, 'start_index': self._start_index, 'metadata': self.trace.metadata}
 
     @classmethod
-    def _from_args(cls, parser: 'configargparse.ArgumentParser') -> 'TraceEnv':
+    def _from_args(cls, parser: 'configargparse.ArgumentParser') -> List['TraceEnv']:
         group = parser.add_argument_group('TraceEnv')
-        group.add_argument('--trace-file', type=str, help='Folder containing the trace')
+        group.add_argument('--trace-file', type=str, help='File/folder containing the trace')
         group.add_argument('--env-start-hours', type=float, default=0, help='Start hours of the trace')
         args, _ = parser.parse_known_args()
-        return cls(args.trace_file, args.env_start_hours)
+        if os.path.isdir(args.trace_file):
+            trace_files = []
+            for file in os.listdir(args.trace_file):
+                if file.endswith('.json'):
+                    trace_files.append(os.path.join(args.trace_file, file))
+            return [cls(trace_file, args.env_start_hours) for trace_file in trace_files]
+        return [cls(args.trace_file, args.env_start_hours)]
     
