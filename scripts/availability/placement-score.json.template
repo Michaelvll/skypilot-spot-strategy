@@ -1,0 +1,7 @@
+{
+    "InstanceTypes": [
+        "%s"
+    ],
+    "SingleAvailabilityZone": true
+}
+
