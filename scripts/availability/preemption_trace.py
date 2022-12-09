@@ -56,6 +56,9 @@ class SpotInstance:
     def get_zone(self):
         return self.zone
 
+    def get_ins_id(self):
+        return self.ins_id
+
     def spot_request(self):
         response = self.boto_client.request_spot_instances(
             InstanceCount=1,
@@ -234,9 +237,20 @@ def main():
 
     ray.init()
 
-    instance_type = "p2.xlarge"
-    zones = ["us-west-2a", "us-east-1b", "us-east-2a"]
-    ins_count = 4
+    # g5.4xlarge
+    # instance_type = "g5.4xlarge"
+    # zones = ["us-west-2a", "us-east-1b"]
+    # ins_count = 2
+
+    # p2.xlarge
+    # instance_type = "p2.xlarge"
+    # zones = ["us-west-2a", "us-east-1b", "us-east-2a"]
+    # ins_count = 4
+
+    # p3.2xlarge
+    instance_type = "p3.2xlarge"
+    zones = ["us-west-2a", "us-east-2a"]
+    ins_count = 2
 
     inss = []
     handles = []
@@ -250,13 +264,14 @@ def main():
             inss.append(ins)
             handles.append(h)
 
-    for i in range(300):
+    for i in range(3000):
         time.sleep(SPOT_CHECKIN_WAIT_TIME)
         date = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
         stats = {"date": date}
 
         for zone in zones:
             stats[zone] = {}
+            stats[zone]["ins_ids"] = []
             stats[zone]["pool_size"] = 0
             stats[zone]["score"] = get_placement_score_list(
                 instance_type, zone, [1, 3, 10, 50])
@@ -264,12 +279,14 @@ def main():
         for ins in inss:
             zone = ray.get(ins.get_zone.remote())
             alive = ray.get(ins.get_is_alive.remote())
+            ins_id = ray.get(ins.get_ins_id.remote())
             if alive == True:
                 stats[zone]["pool_size"] += 1
+                stats[zone]["ins_ids"].append(ins_id)
 
         logging.info("==========")
 
-        with open("stats.json", "a") as f:
+        with open(f"stats-{instance_type}-{ins_count}.json", "a") as f:
             f.write(json.dumps(stats)+"\n")
 
         logging.info(stats)
