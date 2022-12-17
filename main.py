@@ -38,7 +38,7 @@ def simulate(env: env_lib.Env, strategy: strategy_lib.Strategy):
             **env.info(),
             **strategy.info(),
         }
-    return info['Cost']
+    return info['Cost'], env.tick
     
 
 def main():
@@ -54,15 +54,17 @@ def main():
     strategy = strategy_lib.Strategy.from_args(parser)
     args, _ = parser.parse_known_args()
     costs = []
+    ticks = []
     spot_costs = []
     cost_ratio = []
 
-    trace_file = args.trace_file.split('/')[-2].split('.')[0]
+    trace_file = args.trace_file.split('/')[-1]
     env_name = envs[0].NAME
     env_config = envs[0].config
     run_name = f'{strategy.name}-{env_name}-{trace_file}-ddl={args.deadline_hours}-dur={args.task_duration_hours}-over={args.restart_overhead_hours}'
     if args.env_start_hours > 0:
         run_name += f'-start={args.env_start_hours}h'
+    print(run_name)
     wandb.run.name = run_name
     wandb.run.save()
     wandb.config.update(args)
@@ -78,7 +80,9 @@ def main():
         print(env)
         print(strategy)
 
-        costs.append(simulate(env, strategy))
+        cost, tick = simulate(env, strategy)
+        costs.append(cost)
+        ticks.append(tick)
     
         # if len(envs) > 1:
         #     env.reset()
@@ -105,8 +109,9 @@ def main():
     os.makedirs('exp/', exist_ok=True)
     with open(f'exp/{run_name}', 'w') as f:
         json.dump({
-            'args': args,
+            'args': str(args),
             'costs': costs,
+            'ticks': ticks,
         }, f)
     print('mean: ', np.mean(costs), '; std: ', np.std(costs), '; worst 1%: ', np.percentile(costs, 99), '; worst 10%: ', np.percentile(costs, 90))
 
