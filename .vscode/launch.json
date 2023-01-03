@@ -1,0 +1,24 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--strategy=strawman",
+                "--env=trace",
+                "--trace-file=data/poisson/gap_600-hourly_rate_0.5",
+                "--restart-overhead-hours=0.1",
+                "--deadline-hours=48.1",
+                "--task-duration-hours=48"
+            ]
+        }
+    ]
+}

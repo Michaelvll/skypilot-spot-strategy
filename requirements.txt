@@ -31,3 +31,4 @@ tenacity==8.1.0
 urllib3==1.26.12
 wandb==0.13.4
 pulp
+tqdm

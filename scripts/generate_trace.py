@@ -60,6 +60,14 @@ class PoissonTraceGenerator(TraceGenerator):
             'hourly_rate': self.hourly_rate,
             'length': self.length,
         }
+    
+class TwoExponentialGenerator(TraceGenerator):
+    NAME = 'two_exponential'
+    
+    def __init__(self, trace_folder: str, gap_seconds: int):
+        pass
+
+
 
 if __name__ == __name__:
     parser = argparse.ArgumentParser()
